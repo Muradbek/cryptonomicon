@@ -32,7 +32,7 @@
               DOGE
             </span>
               <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              BCH
+              BCHsdfgwefwefdweq
             </span>
               <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
               CHD
