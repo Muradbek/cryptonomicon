@@ -206,4 +206,3 @@
   }
 </script>
 
-<style src="./app.css"></style>
