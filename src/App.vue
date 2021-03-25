@@ -17,7 +17,7 @@
                         <div class="mt-1 relative rounded-md shadow-md">
                             <input
                                     v-model="ticker"
-                                    @keydown="addHint()"
+                                    @keydown="addHint"
                                     @keydown.enter="addTicker"
                                     type="text"
                                     name="wallet"
@@ -171,30 +171,39 @@
             }
         },
 
-        created: function () {
-            (async () => {
-                let url = 'https://min-api.cryptocompare.com/data/all/coinlist?summary=true';
-                let response = await fetch(url);
-                let data = await response.json(); // читаем ответ в формате JSON
-                let list = data.Data
-                for (let key in list) {
-                    this.coinList.push(list[key].FullName)
-                }
-                this.spinner = await false
-            })()
-        },
+        created () {
+         (async () => {
+                    let url = 'https://min-api.cryptocompare.com/data/all/coinlist?summary=true';
+                    let response = await fetch(url);
+                    let data = await response.json(); // читаем ответ в формате JSON
+                    let list = data.Data
+                    for (let key in list) {
+                        this.coinList.push(list[key].FullName)
+                    }
+                    this.spinner = await false
+                })()
+
+
+            },
 
         methods:
             {
                 addTicker(coin)
                 {
-                    coin? this.ticker = coin: ""
+                    if (!this.coinList.find(t => t.toUpperCase() == this.ticker.toUpperCase())) {
+                        this.ticker = ""
+                        return
+                    }
+
+                    typeof coin == 'string' ? this.ticker = coin: ""
+                    console.log(this.ticker)
                     this.autoCoins = []
                     if(this.tickers.find(t => t.name == coin)) {
                         this.err = true
                         this.autoCoins = [coin]
                         return
                     }
+
 
                     const currentTiker = {name: this.ticker, price: "-"};
 
@@ -212,8 +221,7 @@
                         this.normalizeGraph()
                     }, 5000)
 
-                }
-                ,
+                },
 
                 handleDelete(t)
                 {
