@@ -37,7 +37,7 @@
               {{coin}}
             </span>
                         </div>
-                        <div v-if='err' class="text-sm text-red-600">Такой тикер уже добавлен</div>
+                        <div v-if="err" class="text-sm text-red-600">Такой тикер уже добавлен</div>
                     </div>
                 </div>
                 <button
@@ -155,6 +155,24 @@
 
 <script>
 
+    // H - homework - домашнее задание
+
+    // [x] 6. Наличие в состоянии ЗАВИСИМЫХ ДАННЫХ | Критичность: 5+
+    // [x] 4. Запросы напрямую внутри компонента (???) | Критичность: 5
+    // [x] 2. При удалении остается подписка на загрузку тикера | Критичность: 5
+    // [H] 5. Обработка ошибок API | Критичность: 5
+    // [х] 3. Количество запросов | Критичность: 4
+    // [x] 8. При удалении тикера не изменяется localStorage | Критичность: 4
+    // [x] 1. Одинаковый код в watch | Критичность: 3
+    // [ ] 9. localStorage и анонимные вкладки | Критичность: 3
+    // [x] 7. График ужасно выглядит если будет много цен | Критичность: 2
+    // [ ] 10. Магические строки и числа (URL, 5000 миллисекунд задержки, ключ локал стораджа, количество на странице) |  Критичность: 1
+
+    // Параллельно
+    // [x] График сломан если везде одинаковые значения
+    // [x] При удалении тикера остается выбор
+
+
     export default {
         name: 'App',
 
@@ -182,6 +200,11 @@
                     }
                     this.spinner = await false
                 })()
+            const tickersItem = localStorage.getItem("cryptonomicon-list")
+            if(tickersItem) {
+                this.tickers = JSON.parse(tickersItem)
+                this.tickers.forEach( t => this.subscribeToUpdates(t.name))
+            }
 
 
             },
@@ -190,43 +213,51 @@
             {
                 addTicker(coin)
                 {
-                    if (!this.coinList.find(t => t.toUpperCase() == this.ticker.toUpperCase())) {
+                    typeof coin == 'string' ? this.ticker = coin.toUpperCase(): ""
+
+                    if (!(this.coinList.find(t => t.toUpperCase().includes(this.ticker.toUpperCase())))) {
                         this.ticker = ""
                         return
                     }
-
-                    typeof coin == 'string' ? this.ticker = coin: ""
-                    console.log(this.ticker)
                     this.autoCoins = []
                     if(this.tickers.find(t => t.name == coin)) {
-                        this.err = true
+                        this.err = true   // v-if работает
                         this.autoCoins = [coin]
                         return
                     }
+                    if(this.tickers.find(t => t.name == this.ticker.toUpperCase())) {
+                        this.err = true // v-if неработает
+                        return
+                    }
 
-
-                    const currentTiker = {name: this.ticker, price: "-"};
+                    const currentTiker = {name: this.ticker.toUpperCase(), price: "-"};
+                    this.subscribeToUpdates(currentTiker.name);
 
                     this.tickers.push(currentTiker);
+                    localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers))
                     this.ticker = "";
+
+                },
+
+                subscribeToUpdates(tickerName) {
                     setInterval(async () => {
-                        const f = await fetch(`https:/min-api.cryptocompare.com/data/price?fsym=${currentTiker.name}&tsyms=USD&api_key=84d6268818ede37deaf2804076b00a9e5e9b8c9052f1cbef1fdda913e15173cc`)
+                        const f = await fetch(`https:/min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=84d6268818ede37deaf2804076b00a9e5e9b8c9052f1cbef1fdda913e15173cc`)
                         const data = await f.json();
-                        this.tickers.find(t => t.name == currentTiker.name).price = data.USD > 1 ?
+                        this.tickers.find(t => t.name == tickerName).price = data.USD > 1 ?
                             data.USD.toFixed(2) :
                             data.USD.toPrecision(2)
-                        if (this.sel?.name == currentTiker.name) {
+                        if (this.sel?.name == tickerName) {
                             this.graph.push(data.USD)
                         }
                         this.normalizeGraph()
                     }, 5000)
-
                 },
 
                 handleDelete(t)
                 {
                     this.tickers = this.tickers.filter(ticker => ticker != t)
                     t == this.sel ? this.sel = null : ""
+                    localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers))
                 }
                 ,
 
@@ -243,9 +274,11 @@
                     const minValue = Math.min(...this.graph);
                     return this.graph.map(price => 5 + ((price - minValue) * 95 / (maxValue - minValue)))
                 },
-                addHint() {
+                addHint(e) {
                     setTimeout(() => {
-                        this.err = false
+                        if(!e.key == "Enter") this.err = false
+
+
                         this.autoCoins = []
                         if(this.ticker.length<1) {
                             return this.autoCoins = []
