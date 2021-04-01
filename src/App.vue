@@ -37,7 +37,7 @@
               {{coin}}
             </span>
                         </div>
-                        <div v-if="err" class="text-sm text-red-600">This ticker has already been added</div>
+                        <div v-if="err" class="text-sm text-red-600">{{errText}}</div>
                     </div>
                 </div>
                 <button
@@ -186,6 +186,7 @@
                 graph: [],
                 autoCoins: [],
                 err: null,
+                errText: "",
                 coinList: [],
                 spinner: true,
                 page: 1,
@@ -218,24 +219,23 @@
             {
                 addTicker(coin)
                 {
+                    this.ticker = this.ticker.toUpperCase()
                     typeof coin == 'string' ? this.ticker = coin.toUpperCase(): ""
 
-                    if (!(this.coinList.find(t => t.toUpperCase().includes(this.ticker.toUpperCase())))) {
-                        this.ticker = ""
+                    if (!(this.coinList.find(t => t.split("(")[1].split("").slice(0, -1).join("")==this.ticker.toUpperCase()))) {
+                        this.errText = "Such ticker does not exist"
+                        this.err = true
                         return
                     }
                     this.autoCoins = []
-                    if(this.tickers.find(t => t.name == coin)) {
+                    if(this.tickers.find(t => t.name == this.ticker)) {
                         this.err = true   // v-if работает
+                        this.errText = "This ticker has already been added"
                         this.autoCoins = [coin]
                         return
                     }
-                    if(this.tickers.find(t => t.name == this.ticker.toUpperCase())) {
-                        this.err = true // v-if неработает
-                        return
-                    }
 
-                    const currentTiker = {name: this.ticker.toUpperCase(), price: "-"};
+                    const currentTiker = {name: this.ticker, price: "-"};
                     this.subscribeToUpdates(currentTiker.name);
 
                     this.tickers.push(currentTiker);
@@ -282,7 +282,6 @@
                 addHint(e) {
                     setTimeout(() => {
                         if(!(e.key == "Enter")) this.err = false
-                        window.err = this.err
 
                         this.autoCoins = []
                         if(this.ticker.length<1) {
