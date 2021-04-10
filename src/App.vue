@@ -267,9 +267,8 @@
 
             loadCoinList(COIN_LIST_URL).then(res => {
                 [this.coinList, this.spinner] = res
-                console.log(this.coinList, this.spinner)
             })
-            
+
             const tickersItem = localStorage.getItem("cryptonomicon-list")
             if (tickersItem) {
                 this.tickers = JSON.parse(tickersItem)
